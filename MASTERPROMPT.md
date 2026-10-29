@@ -632,7 +632,7 @@ Phone app ──HTTPS──> Netlify Function /api/msaidizi/*  (verifies the Sup
 Telegram / WhatsApp ──> the owner profile's own gateway (own bot token) ──> same tools, voice notes in and out
 ```
 - **One Linux user and one container per client** (`fruit-<slug>`), following the company standard in
-  `docs/HERMES-ISOLATION.md` (company repo): `ops/hermes/new-client.sh <slug>` creates the user (private home, own
+  `docs/company/HERMES-ISOLATION.md`: the company repo's `ops/hermes/new-client.sh <slug>` creates the user (private home, own
   rootless Podman, own memory and CPU limits) and `ops/hermes/check-isolation.sh` proves the wall. The container, run
   by that user, holds exactly two Hermes profiles: `owner` (full tools) and `staff` (seller and delivery tools). Hermes
   profiles separate config, keys, memory, sessions and skills, but they do **not** sandbox the filesystem, so different
@@ -871,6 +871,12 @@ One orchestrated scroll moment: a heap of fruit becomes numbers (bought, sold, s
    table: `business_id = fruit.current_business()`. Owner-only tables and views (costs, purchase prices, margins, profit,
    expenses, supplier balances, reports, settings, staff admin) deny other roles; sellers see purchase counts without
    prices. Delivery role sees only its own orders. `fruit_private` is not exposed.
+   These helpers and the standard policies come from the company framework for naim-local
+   (`docs/company/NAIM-LOCAL.md`), shipped in this repo as `supabase/naim/001_framework.sql` (copied from the company
+   repo on every publish; never edit it here): make it your first migration, run
+   `select naim.add_system('fruit')`, and call `naim.protect('fruit', '<table>')` on every table
+   (`append_only => true` for ledgers, stock moves and events; `readers => array['owner','assistant_owner']` for the
+   owner-only ones), then add the role-specific policies on top (delivery sees only its own orders).
 5. **RLS tests** (`supabase/tests/rls.sql`, run in CI): owner sees own business only; seller cannot read costs, margins,
    expenses or profit views; rider sees only own orders; a second business is invisible to all; `assistant_staff`
    cannot read owner-only views.
